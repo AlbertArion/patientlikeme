@@ -1,0 +1,102 @@
+/* 患者社区 - 红色主色 · 医疗温暖 × 科技感 */
+:root {
+  --pc-primary: #c41e3a;
+  --pc-primary-light: #e84c5c;
+  --pc-primary-dark: #9a1830;
+  --pc-warm: #fef2f2;
+  --pc-warm-bg: #fff5f5;
+  --pc-cool: #1e293b;
+  --pc-cool-muted: #64748b;
+  --pc-surface: #ffffff;
+  --pc-border: #fecaca;
+  --pc-shadow: 0 4px 20px rgba(196, 30, 58, 0.08);
+  --pc-radius: 12px;
+  --pc-radius-lg: 16px;
+}
+
+/* Element Plus 主色覆盖为红色（覆盖默认蓝色） */
+:root,
+html {
+  --el-color-primary: #c41e3a;
+  --el-color-primary-rgb: 196, 30, 58;
+  --el-color-primary-light-3: #e84c5c;
+  --el-color-primary-light-5: #f07582;
+  --el-color-primary-light-7: #f7a0a9;
+  --el-color-primary-light-8: #fbc4c9;
+  --el-color-primary-light-9: #fef2f2;
+  --el-color-primary-dark-2: #9a1830;
+}
+
+/* 强制所有 primary 按钮、链接、标签为红色 */
+.el-button--primary,
+.el-button--primary:focus,
+.el-button--primary:hover {
+  --el-button-bg-color: #c41e3a !important;
+  --el-button-border-color: #c41e3a !important;
+  --el-button-text-color: #fff !important;
+  background-color: #c41e3a !important;
+  border-color: #c41e3a !important;
+  color: #fff !important;
+}
+
+.el-button--primary:hover {
+  background-color: #9a1830 !important;
+  border-color: #9a1830 !important;
+}
+
+.el-button--primary:active {
+  background-color: #9a1830 !important;
+  border-color: #9a1830 !important;
+}
+
+.el-button--primary.is-loading {
+  background-color: #c41e3a !important;
+  border-color: #c41e3a !important;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  color: var(--pc-cool);
+  background: #f8fafc;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+.container-wide {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+.page-header {
+  background: var(--pc-surface);
+  padding: 20px 0;
+  box-shadow: var(--pc-shadow);
+  margin-bottom: 30px;
+}
+
+.page-title {
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--pc-cool);
+}
+
+.card {
+  background: var(--pc-surface);
+  border-radius: var(--pc-radius);
+  padding: 20px;
+  box-shadow: var(--pc-shadow);
+  margin-bottom: 20px;
+}
