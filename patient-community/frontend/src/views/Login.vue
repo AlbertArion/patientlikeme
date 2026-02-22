@@ -1,11 +1,50 @@
 <template>
   <div class="login-page">
     <header class="auth-header">
-      <router-link to="/" class="logo">
-        <span class="logo-text">患者社区</span>
-        <span class="logo-tagline">找到和你一样的人</span>
-      </router-link>
+      <div class="auth-header-inner container-wide">
+        <router-link to="/" class="logo">
+          <img src="/favicon.png" alt="患者社区" class="logo-img" />
+          <div class="logo-text-wrap">
+            <span class="logo-text">患者社区</span>
+            <span class="logo-tagline">找到和你一样的人</span>
+          </div>
+        </router-link>
+        <nav class="nav-links">
+          <router-link to="/dashboard" :class="{ active: isActive('/dashboard') }">控制台</router-link>
+          <router-link to="/records" :class="{ active: isActive('/records') }">我的病历</router-link>
+          <router-link to="/similar-patients" :class="{ active: isActive('/similar-patients') }">相似患者</router-link>
+          <router-link to="/community" :class="{ active: isActive('/community') }">社区</router-link>
+          <router-link to="/solutions" :class="{ active: isActive('/solutions') }">治疗方案</router-link>
+        </nav>
+        <button class="nav-menu-btn" aria-label="菜单" @click="authMenuOpen = true">
+          <el-icon :size="24"><Operation /></el-icon>
+        </button>
+        <div class="nav-actions">
+          <router-link to="/login" class="btn btn-ghost">登录</router-link>
+          <router-link :to="{ path: '/register', query: $route.query }" class="btn btn-primary">立即加入</router-link>
+        </div>
+      </div>
     </header>
+    <el-drawer
+      v-model="authMenuOpen"
+      direction="rtl"
+      size="280px"
+      :with-header="false"
+      class="auth-nav-drawer"
+    >
+      <nav class="drawer-nav">
+        <router-link to="/" @click="authMenuOpen = false" :class="{ active: isActive('/') }">首页</router-link>
+        <router-link to="/dashboard" @click="authMenuOpen = false" :class="{ active: isActive('/dashboard') }">控制台</router-link>
+        <router-link to="/records" @click="authMenuOpen = false" :class="{ active: isActive('/records') }">我的病历</router-link>
+        <router-link to="/similar-patients" @click="authMenuOpen = false" :class="{ active: isActive('/similar-patients') }">相似患者</router-link>
+        <router-link to="/community" @click="authMenuOpen = false" :class="{ active: isActive('/community') }">社区</router-link>
+        <router-link to="/solutions" @click="authMenuOpen = false" :class="{ active: isActive('/solutions') }">治疗方案</router-link>
+      </nav>
+      <div v-if="!userStore.isLoggedIn" class="drawer-actions">
+        <router-link to="/login" class="drawer-btn drawer-btn-ghost" @click="authMenuOpen = false">登录</router-link>
+        <router-link to="/register" class="drawer-btn drawer-btn-primary" @click="authMenuOpen = false">立即加入</router-link>
+      </div>
+    </el-drawer>
 
     <div class="auth-body">
       <aside class="auth-brand">
@@ -58,7 +97,7 @@
           </el-form>
           <div class="links">
             还没有账号？
-            <router-link to="/register">立即注册</router-link>
+            <router-link :to="{ path: '/register', query: $route.query }">立即注册</router-link>
           </div>
         </div>
       </main>
@@ -68,15 +107,26 @@
 
 <script setup>
 import { ref, reactive } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { authAPI } from '@/api/auth'
 import { useUserStore } from '@/stores/user'
 
+const route = useRoute()
 const router = useRouter()
 const userStore = useUserStore()
+
+// 菜单选中：当前路径或 redirect 参数匹配时高亮
+const isActive = (path) => {
+  if (path === '/login') return route.path === '/login'
+  const target = route.query.redirect || route.path
+  if (path === '/') return target === '/'
+  if (path === '/dashboard') return target === '/dashboard'
+  return target.startsWith(path)
+}
 const formRef = ref(null)
 const loading = ref(false)
+const authMenuOpen = ref(false)
 
 const form = reactive({
   username: '',
@@ -101,7 +151,7 @@ const handleLogin = async () => {
     userStore.setToken(response.access_token)
     userStore.setUserInfo(response.user)
     ElMessage.success('登录成功')
-    router.push('/dashboard')
+    router.push(route.query.redirect || '/dashboard')
   } catch (error) {
     if (error.response) {
       ElMessage.error(error.response.data.detail || '登录失败')
@@ -126,15 +176,207 @@ const handleLogin = async () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  border-bottom: 1px solid rgba(196, 30, 58, 0.08);
-  background: rgba(255, 255, 255, 0.8);
+  background: var(--pc-surface);
+  box-shadow: 0 1px 0 rgba(196, 30, 58, 0.06);
+  position: sticky;
+  top: 0;
+  z-index: 100;
 }
 
 .auth-header .logo {
   display: inline-flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
+  gap: 10px;
   text-decoration: none;
+}
+
+.auth-header .logo-img {
+  height: 42px;
+  width: 42px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.auth-header .logo-text-wrap {
+  display: flex;
+  flex-direction: column;
+}
+
+.auth-header-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 64px;
+  gap: 32px;
+  width: 100%;
+}
+
+.auth-header .nav-links {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.auth-header .nav-links a {
+  padding: 8px 16px;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--pc-cool-muted);
+  border-radius: 8px;
+  transition: color 0.2s, background 0.2s;
+}
+
+.auth-header .nav-links a:hover {
+  color: var(--pc-primary);
+  background: var(--pc-warm);
+}
+
+.auth-header .nav-links a.active {
+  color: var(--pc-primary);
+  background: var(--pc-warm);
+}
+
+.auth-header .nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.auth-header .nav-actions .btn {
+  padding: 8px 20px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  text-decoration: none;
+  transition: all 0.2s;
+}
+
+.auth-header .nav-actions .btn-ghost {
+  color: var(--pc-cool);
+  border: 1px solid #e2e8f0;
+}
+
+.auth-header .nav-actions .btn-ghost:hover {
+  border-color: var(--pc-primary);
+  color: var(--pc-primary);
+}
+
+.auth-header .nav-actions .btn-primary {
+  background: var(--pc-primary);
+  color: white;
+  border: none;
+}
+
+.auth-header .nav-actions .btn-primary:hover {
+  background: var(--pc-primary-dark);
+  color: white;
+}
+
+@media (max-width: 900px) {
+  .auth-header .nav-links {
+    display: none !important;
+  }
+  .auth-header .nav-actions .btn-ghost,
+  .auth-header .nav-actions .btn-primary {
+    display: none;
+  }
+}
+
+.nav-menu-btn {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  padding-left: 0;
+  padding-right: 0;
+  margin-left: auto;
+  margin-right: 8px;
+  border: none;
+  background: transparent;
+  color: var(--pc-cool);
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.nav-menu-btn:hover {
+  background: var(--pc-warm);
+  color: var(--pc-primary);
+}
+
+@media (max-width: 900px) {
+  .nav-menu-btn {
+    display: flex;
+  }
+}
+
+.drawer-nav {
+  display: flex;
+  flex-direction: column;
+  padding: 24px 0;
+}
+
+.drawer-nav a {
+  padding: 14px 24px;
+  font-size: 16px;
+  color: var(--pc-cool);
+  text-decoration: none;
+  border-left: 3px solid transparent;
+}
+
+.drawer-nav a:hover,
+.drawer-nav a.active {
+  background: var(--pc-warm);
+  color: var(--pc-primary);
+  border-left-color: var(--pc-primary);
+}
+
+.drawer-actions {
+  padding: 16px 24px;
+  border-top: 1px solid var(--pc-warm);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.drawer-btn {
+  display: block;
+  text-align: center;
+  padding: 12px 20px;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 500;
+  text-decoration: none;
+  transition: all 0.2s;
+}
+
+.drawer-btn-ghost {
+  color: var(--pc-cool);
+  border: 1px solid #e2e8f0;
+}
+
+.drawer-btn-ghost:hover {
+  border-color: var(--pc-primary);
+  color: var(--pc-primary);
+}
+
+.drawer-btn-primary {
+  background: var(--pc-primary);
+  color: white;
+  border: none;
+}
+
+.drawer-btn-primary:hover {
+  background: var(--pc-primary-dark);
+  color: white;
+}
+
+.auth-nav-drawer :deep(.el-drawer__body) {
+  padding: 0;
+  overflow: auto;
 }
 
 .logo-text {

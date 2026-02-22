@@ -114,7 +114,7 @@ onMounted(async () => {
 }
 
 .hero-tagline {
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 500;
   color: var(--pc-primary);
   margin-bottom: 8px;
@@ -214,7 +214,7 @@ onMounted(async () => {
 }
 
 .block-title {
-  font-size: 18px;
+  font-size: 20px;
   font-weight: 600;
   color: var(--pc-cool);
   margin-bottom: 20px;

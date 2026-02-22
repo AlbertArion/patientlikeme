@@ -80,6 +80,18 @@ body {
   padding: 0 24px;
 }
 
+@media (max-width: 768px) {
+  .container-wide {
+    padding: 0 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .container-wide {
+    padding: 0 12px;
+  }
+}
+
 .page-header {
   background: var(--pc-surface);
   padding: 20px 0;
@@ -93,10 +105,83 @@ body {
   color: var(--pc-cool);
 }
 
+/* 各页标题区域统一：页面主标题 32px、副标题 16px、区块标题 20px */
+.page-hero h1 {
+  font-size: 32px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+.page-hero .hero-tagline {
+  font-size: 16px;
+}
+.section-title,
+.block-title,
+.posts-header h2 {
+  font-size: 20px;
+  font-weight: 600;
+}
+
 .card {
   background: var(--pc-surface);
   border-radius: var(--pc-radius);
   padding: 20px;
   box-shadow: var(--pc-shadow);
   margin-bottom: 20px;
+}
+
+/* 弹窗移动端适配：宽度留边距、内边距适中、水平垂直居中 */
+@media (max-width: 768px) {
+  .el-dialog {
+    width: calc(100% - 32px) !important;
+    max-width: none;
+    margin: 0 !important;
+    left: 50% !important;
+    top: 50% !important;
+    transform: translate(-50%, -50%) !important;
+  }
+  .el-dialog__header {
+    padding: 16px 20px 12px;
+  }
+  .el-dialog__title {
+    font-size: 17px;
+  }
+  .el-dialog__headerbtn {
+    top: 14px;
+    right: 16px;
+  }
+  .el-dialog__body {
+    padding: 12px 20px 16px;
+    max-height: 60vh;
+    overflow-y: auto;
+  }
+  .el-dialog__footer {
+    padding: 12px 20px 16px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    justify-content: flex-end;
+  }
+  .el-dialog__footer .el-button {
+    flex: 1;
+    min-width: 100px;
+  }
+  .el-dialog .el-form-item__label {
+    min-width: 70px;
+  }
+}
+
+@media (max-width: 480px) {
+  .el-dialog {
+    width: calc(100% - 24px) !important;
+    margin: 0 !important;
+    left: 50% !important;
+    top: 50% !important;
+    transform: translate(-50%, -50%) !important;
+  }
+  .el-dialog__header,
+  .el-dialog__body,
+  .el-dialog__footer {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
 }

@@ -8,8 +8,11 @@
       <div class="container-wide">
         <nav class="navbar">
           <router-link to="/" class="logo">
-            <span class="logo-text">患者社区</span>
-            <span class="logo-tagline">找到和你一样的人</span>
+            <img src="/favicon.png" alt="患者社区" class="logo-img" />
+            <div class="logo-text-wrap">
+              <span class="logo-text">患者社区</span>
+              <span class="logo-tagline">找到和你一样的人</span>
+            </div>
           </router-link>
           <div class="nav-links">
             <router-link to="/community">社区</router-link>
@@ -18,7 +21,30 @@
             <router-link to="/dashboard" v-else>控制台</router-link>
             <router-link to="/register" v-if="!userStore.isLoggedIn" class="btn-join">立即加入</router-link>
           </div>
+          <button class="nav-menu-btn" aria-label="菜单" @click="homeMenuOpen = true">
+            <el-icon :size="24"><Operation /></el-icon>
+          </button>
         </nav>
+        <el-drawer
+          v-model="homeMenuOpen"
+          direction="rtl"
+          size="280px"
+          :with-header="false"
+          class="home-nav-drawer"
+        >
+          <nav class="drawer-nav">
+            <router-link to="/" @click="homeMenuOpen = false" :class="{ active: route.path === '/' }">首页</router-link>
+            <router-link to="/dashboard" @click="homeMenuOpen = false">控制台</router-link>
+            <router-link to="/records" @click="homeMenuOpen = false">我的病历</router-link>
+            <router-link to="/similar-patients" @click="homeMenuOpen = false">相似患者</router-link>
+            <router-link to="/community" @click="homeMenuOpen = false">社区</router-link>
+            <router-link to="/solutions" @click="homeMenuOpen = false">治疗方案</router-link>
+          </nav>
+          <div v-if="!userStore.isLoggedIn" class="drawer-actions">
+            <router-link to="/login" class="drawer-btn drawer-btn-ghost" @click="homeMenuOpen = false">登录</router-link>
+            <router-link to="/register" class="drawer-btn drawer-btn-primary" @click="homeMenuOpen = false">立即加入</router-link>
+          </div>
+        </el-drawer>
 
         <div class="hero-content">
           <div class="hero-text">
@@ -111,11 +137,14 @@
 </template>
 
 <script setup>
-import { useRouter } from 'vue-router'
+import { ref } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 
+const route = useRoute()
 const router = useRouter()
 const userStore = useUserStore()
+const homeMenuOpen = ref(false)
 
 const handleJoin = () => {
   if (userStore.isLoggedIn) router.push('/dashboard')
@@ -134,6 +163,12 @@ const handleLearnMore = () => router.push('/community')
   position: relative;
   padding: 0 0 100px;
   overflow: hidden;
+}
+
+@media (max-width: 768px) {
+  .hero {
+    padding: 0 0 48px;
+  }
 }
 
 .hero-bg {
@@ -163,8 +198,29 @@ const handleLearnMore = () => router.push('/community')
   padding: 20px 0 40px;
 }
 
+@media (max-width: 768px) {
+  .navbar {
+    padding: 12px 0 24px;
+  }
+}
+
 .logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
   text-decoration: none;
+}
+
+.logo-img {
+  height: 42px;
+  width: 42px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.logo-text-wrap {
+  display: flex;
+  flex-direction: column;
 }
 
 .logo-text {
@@ -185,6 +241,44 @@ const handleLearnMore = () => router.push('/community')
   display: flex;
   align-items: center;
   gap: 8px;
+}
+
+.nav-menu-btn {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  padding-left: 0;
+  padding-right: 0;
+  margin-left: auto;
+  margin-right: 8px;
+  border: none;
+  background: transparent;
+  color: var(--pc-cool);
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.nav-menu-btn:hover {
+  background: var(--pc-warm);
+  color: var(--pc-primary);
+}
+
+@media (max-width: 900px) {
+  .nav-links {
+    display: none !important;
+  }
+  .nav-menu-btn {
+    display: flex;
+  }
+}
+
+@media (max-width: 480px) {
+  .logo-tagline {
+    display: none;
+  }
 }
 
 .nav-links a {
@@ -212,6 +306,72 @@ const handleLearnMore = () => router.push('/community')
   color: white !important;
 }
 
+.drawer-nav {
+  display: flex;
+  flex-direction: column;
+  padding: 24px 0;
+}
+
+.drawer-nav a {
+  padding: 14px 24px;
+  font-size: 16px;
+  color: var(--pc-cool);
+  text-decoration: none;
+  border-left: 3px solid transparent;
+}
+
+.drawer-nav a:hover,
+.drawer-nav a.active {
+  background: var(--pc-warm);
+  color: var(--pc-primary);
+  border-left-color: var(--pc-primary);
+}
+
+.drawer-actions {
+  padding: 16px 24px;
+  border-top: 1px solid var(--pc-warm);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.drawer-btn {
+  display: block;
+  text-align: center;
+  padding: 12px 20px;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 500;
+  text-decoration: none;
+  transition: all 0.2s;
+}
+
+.drawer-btn-ghost {
+  color: var(--pc-cool);
+  border: 1px solid #e2e8f0;
+}
+
+.drawer-btn-ghost:hover {
+  border-color: var(--pc-primary);
+  color: var(--pc-primary);
+}
+
+.drawer-btn-primary {
+  background: var(--pc-primary);
+  color: white;
+  border: none;
+}
+
+.drawer-btn-primary:hover {
+  background: var(--pc-primary-dark);
+  color: white;
+}
+
+.home-nav-drawer :deep(.el-drawer__body) {
+  padding: 0;
+  overflow: auto;
+}
+
 .hero-content {
   position: relative;
   display: grid;
@@ -225,9 +385,68 @@ const handleLearnMore = () => router.push('/community')
   .hero-content {
     grid-template-columns: 1fr;
     text-align: center;
+    padding: 16px 0 40px;
   }
   .hero-visual {
     order: -1;
+  }
+  .subtitle {
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .cta-buttons {
+    justify-content: center;
+  }
+}
+
+@media (max-width: 768px) {
+  .hero-text h1 {
+    font-size: 28px;
+    margin-bottom: 16px;
+  }
+  .subtitle {
+    font-size: 15px;
+    margin-bottom: 24px;
+  }
+  .cta-buttons {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 12px;
+  }
+  .cta-buttons .btn {
+    width: auto;
+    min-width: 120px;
+    max-width: 160px;
+    padding: 12px 20px;
+    font-size: 15px;
+  }
+  .hex-network {
+    width: 200px;
+    height: 200px;
+  }
+  .hex {
+    width: 40px;
+    height: 40px;
+  }
+  .hex-center {
+    width: 52px;
+    height: 52px;
+  }
+  .hex-1 { left: 0; top: 18%; }
+  .hex-2 { right: 5%; top: 0; }
+  .hex-3 { right: 0; top: 42%; }
+  .hex-4 { right: 5%; bottom: 5%; }
+  .hex-5 { left: 10%; bottom: 0; }
+  .hex-6 { left: 0; top: 48%; }
+}
+
+@media (max-width: 480px) {
+  .hero-text h1 {
+    font-size: 24px;
+  }
+  .subtitle {
+    font-size: 14px;
   }
 }
 
@@ -330,6 +549,12 @@ const handleLearnMore = () => router.push('/community')
   padding: 80px 0;
 }
 
+@media (max-width: 768px) {
+  .section {
+    padding: 40px 0;
+  }
+}
+
 .section-title {
   text-align: center;
   font-size: 32px;
@@ -337,6 +562,13 @@ const handleLearnMore = () => router.push('/community')
   color: var(--pc-cool);
   margin-bottom: 48px;
   letter-spacing: -0.02em;
+}
+
+@media (max-width: 768px) {
+  .section-title {
+    font-size: 24px;
+    margin-bottom: 28px;
+  }
 }
 
 .features {
@@ -368,6 +600,23 @@ const handleLearnMore = () => router.push('/community')
   background: #fafafa;
   border: 1px solid #f1f5f9;
   transition: all 0.3s;
+}
+
+@media (max-width: 768px) {
+  .feature-card {
+    padding: 24px 16px;
+  }
+  .feature-icon {
+    width: 56px;
+    height: 56px;
+    margin-bottom: 16px;
+  }
+  .feature-card h3 {
+    font-size: 16px;
+  }
+  .feature-card p {
+    font-size: 13px;
+  }
 }
 
 .feature-card:hover {
@@ -449,6 +698,20 @@ const handleLearnMore = () => router.push('/community')
   margin-bottom: 8px;
 }
 
+@media (max-width: 768px) {
+  .steps {
+    gap: 24px;
+  }
+  .step-num {
+    width: 48px;
+    height: 48px;
+    font-size: 18px;
+  }
+  .step h3 {
+    font-size: 16px;
+  }
+}
+
 .step p {
   font-size: 14px;
   color: var(--pc-cool-muted);
@@ -461,5 +724,12 @@ const handleLearnMore = () => router.push('/community')
   padding: 24px 0;
   text-align: center;
   font-size: 14px;
+}
+
+@media (max-width: 480px) {
+  .footer {
+    padding: 20px 16px;
+    font-size: 13px;
+  }
 }
 </style>

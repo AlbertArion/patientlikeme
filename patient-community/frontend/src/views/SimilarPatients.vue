@@ -104,14 +104,15 @@ onMounted(() => {
 }
 
 .page-hero h1 {
-  font-size: 28px;
+  font-size: 32px;
   font-weight: 700;
   color: var(--pc-cool);
   margin-bottom: 8px;
+  letter-spacing: -0.02em;
 }
 
 .hero-tagline {
-  font-size: 15px;
+  font-size: 16px;
   color: var(--pc-cool-muted);
 }
 

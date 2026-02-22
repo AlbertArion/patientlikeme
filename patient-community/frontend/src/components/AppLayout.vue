@@ -3,8 +3,11 @@
     <header class="top-nav">
       <div class="nav-inner container-wide">
         <router-link to="/" class="logo">
-          <span class="logo-text">患者社区</span>
-          <span class="logo-tagline">找到和你一样的人</span>
+          <img src="/favicon.png" alt="患者社区" class="logo-img" />
+          <div class="logo-text-wrap">
+            <span class="logo-text">患者社区</span>
+            <span class="logo-tagline">找到和你一样的人</span>
+          </div>
         </router-link>
         <nav class="nav-links">
           <router-link to="/dashboard" :class="{ active: isActive('/dashboard') }">控制台</router-link>
@@ -13,6 +16,9 @@
           <router-link to="/community" :class="{ active: isActive('/community') }">社区</router-link>
           <router-link to="/solutions" :class="{ active: isActive('/solutions') }">治疗方案</router-link>
         </nav>
+        <button class="nav-menu-btn" aria-label="菜单" @click="menuOpen = true">
+          <el-icon :size="24"><Operation /></el-icon>
+        </button>
         <div class="nav-actions">
           <template v-if="!userStore.isLoggedIn">
             <router-link to="/login" class="btn btn-ghost">登录</router-link>
@@ -36,6 +42,26 @@
         </div>
       </div>
     </header>
+    <el-drawer
+      v-model="menuOpen"
+      direction="rtl"
+      size="280px"
+      :with-header="false"
+      class="nav-drawer"
+    >
+      <nav class="drawer-nav">
+        <router-link to="/" @click="menuOpen = false">首页</router-link>
+        <router-link to="/dashboard" @click="menuOpen = false" :class="{ active: isActive('/dashboard') }">控制台</router-link>
+        <router-link to="/records" @click="menuOpen = false" :class="{ active: isActive('/records') }">我的病历</router-link>
+        <router-link to="/similar-patients" @click="menuOpen = false" :class="{ active: isActive('/similar-patients') }">相似患者</router-link>
+        <router-link to="/community" @click="menuOpen = false" :class="{ active: isActive('/community') }">社区</router-link>
+        <router-link to="/solutions" @click="menuOpen = false" :class="{ active: isActive('/solutions') }">治疗方案</router-link>
+      </nav>
+      <div v-if="!userStore.isLoggedIn" class="drawer-actions">
+        <router-link to="/login" class="drawer-btn drawer-btn-ghost" @click="menuOpen = false">登录</router-link>
+        <router-link to="/register" class="drawer-btn drawer-btn-primary" @click="menuOpen = false">立即加入</router-link>
+      </div>
+    </el-drawer>
     <main class="layout-main">
       <slot />
     </main>
@@ -43,6 +69,7 @@
 </template>
 
 <script setup>
+import { ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { useUserStore } from '@/stores/user'
@@ -50,6 +77,7 @@ import { useUserStore } from '@/stores/user'
 const route = useRoute()
 const router = useRouter()
 const userStore = useUserStore()
+const menuOpen = ref(false)
 
 const isActive = (path) => {
   if (path === '/dashboard') return route.path === '/dashboard'
@@ -95,11 +123,47 @@ const handleCommand = (cmd) => {
   gap: 32px;
 }
 
+.nav-menu-btn {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  padding-left: 0;
+  padding-right: 0;
+  margin-left: auto;
+  margin-right: 8px;
+  border: none;
+  background: transparent;
+  color: var(--pc-cool);
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.nav-menu-btn:hover {
+  background: var(--pc-warm);
+  color: var(--pc-primary);
+}
+
 .logo {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
   text-decoration: none;
-  color: var(--pc-cool);
+}
+
+.logo-img {
+  height: 42px;
+  width: 42px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.logo-text-wrap {
+  display: flex;
+  flex-direction: column;
 }
 
 .logo-text {
@@ -139,6 +203,23 @@ const handleCommand = (cmd) => {
 .nav-links a.active {
   color: var(--pc-primary);
   background: var(--pc-warm);
+}
+
+/* 移动端只保留汉堡菜单 + 侧滑抽屉，隐藏顶部文字导航 */
+@media (max-width: 900px) {
+  .nav-links {
+    display: none !important;
+  }
+  .nav-menu-btn {
+    display: flex;
+  }
+  .nav-inner {
+    gap: 12px;
+  }
+  .nav-actions .btn-ghost,
+  .nav-actions .btn-primary {
+    display: none;
+  }
 }
 
 .nav-actions {
@@ -207,5 +288,77 @@ const handleCommand = (cmd) => {
 
 .layout-main {
   padding: 24px 0 48px;
+}
+
+@media (max-width: 768px) {
+  .layout-main {
+    padding: 16px 0 32px;
+  }
+}
+
+.drawer-nav {
+  display: flex;
+  flex-direction: column;
+  padding: 24px 0;
+}
+
+.drawer-nav a {
+  padding: 14px 24px;
+  font-size: 16px;
+  color: var(--pc-cool);
+  text-decoration: none;
+  border-left: 3px solid transparent;
+}
+
+.drawer-nav a:hover,
+.drawer-nav a.active {
+  background: var(--pc-warm);
+  color: var(--pc-primary);
+  border-left-color: var(--pc-primary);
+}
+
+.drawer-actions {
+  padding: 16px 24px;
+  border-top: 1px solid var(--pc-warm);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.drawer-btn {
+  display: block;
+  text-align: center;
+  padding: 12px 20px;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 500;
+  text-decoration: none;
+  transition: all 0.2s;
+}
+
+.drawer-btn-ghost {
+  color: var(--pc-cool);
+  border: 1px solid #e2e8f0;
+}
+
+.drawer-btn-ghost:hover {
+  border-color: var(--pc-primary);
+  color: var(--pc-primary);
+}
+
+.drawer-btn-primary {
+  background: var(--pc-primary);
+  color: white;
+  border: none;
+}
+
+.drawer-btn-primary:hover {
+  background: var(--pc-primary-dark);
+  color: white;
+}
+
+.nav-drawer :deep(.el-drawer__body) {
+  padding: 0;
+  overflow: auto;
 }
 </style>
