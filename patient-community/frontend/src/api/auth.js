@@ -19,5 +19,15 @@ export const authAPI = {
   // 更新用户信息
   updateProfile(data) {
     return request.put('/auth/profile', data)
+  },
+
+  // 忘记密码 - 请求验证码
+  forgotPasswordRequest(data) {
+    return request.post('/auth/forgot-password/request', data)
+  },
+
+  // 忘记密码 - 重置
+  forgotPasswordReset(data) {
+    return request.post('/auth/forgot-password/reset', data)
   }
 }

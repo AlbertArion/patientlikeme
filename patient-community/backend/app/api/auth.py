@@ -1,8 +1,16 @@
+import random
+import string
+from datetime import datetime, timedelta
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from ..database import get_db
 from ..models.user import User
-from ..schemas.user import UserCreate, UserLogin, UserResponse, UserUpdate, Token
+from ..models.password_reset import PasswordResetCode
+from ..schemas.user import (
+    UserCreate, UserLogin, UserResponse, UserUpdate, Token,
+    ForgotPasswordRequest, ForgotPasswordReset
+)
 from ..utils.security import verify_password, get_password_hash, create_access_token, get_current_user
 
 router = APIRouter(prefix="/auth", tags=["认证"])
@@ -96,3 +104,98 @@ def update_profile(
     db.commit()
     db.refresh(current_user)
     return current_user
+
+
+def _generate_code() -> str:
+    return "".join(random.choices(string.digits, k=6))
+
+
+@router.post("/forgot-password/request")
+def forgot_password_request(data: ForgotPasswordRequest, db: Session = Depends(get_db)):
+    """忘记密码 - 请求验证码（支持手机号或邮箱）"""
+    if not data.phone and not data.email:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="请填写手机号或邮箱"
+        )
+    # 查找用户
+    if data.phone:
+        user = db.query(User).filter(User.phone == data.phone).first()
+        if not user:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="该手机号未注册")
+    else:
+        user = db.query(User).filter(User.email == data.email).first()
+        if not user:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="该邮箱未注册")
+
+    # 删除该账号之前的验证码
+    if data.phone:
+        db.query(PasswordResetCode).filter(PasswordResetCode.phone == data.phone).delete()
+    else:
+        db.query(PasswordResetCode).filter(PasswordResetCode.email == data.email).delete()
+
+    code = _generate_code()
+    expires_at = datetime.utcnow() + timedelta(minutes=10)
+    reset_code = PasswordResetCode(
+        phone=data.phone,
+        email=data.email,
+        code=code,
+        expires_at=expires_at
+    )
+    db.add(reset_code)
+    db.commit()
+
+    # 生产环境应通过短信/邮件发送验证码，此处为演示返回验证码
+    return {
+        "message": "验证码已发送",
+        "code": code
+    }
+
+
+@router.post("/forgot-password/reset")
+def forgot_password_reset(data: ForgotPasswordReset, db: Session = Depends(get_db)):
+    """忘记密码 - 验证码重置密码"""
+    if not data.phone and not data.email:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="请填写手机号或邮箱"
+        )
+    if len(data.new_password) < 6:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="密码至少6位"
+        )
+
+    # 查找验证码
+    if data.phone:
+        reset_record = db.query(PasswordResetCode).filter(
+            PasswordResetCode.phone == data.phone,
+            PasswordResetCode.code == data.code
+        ).first()
+    else:
+        reset_record = db.query(PasswordResetCode).filter(
+            PasswordResetCode.email == data.email,
+            PasswordResetCode.code == data.code
+        ).first()
+
+    if not reset_record:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="验证码错误")
+    if datetime.utcnow() > reset_record.expires_at:
+        db.delete(reset_record)
+        db.commit()
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="验证码已过期，请重新获取")
+
+    # 查找用户并更新密码
+    if data.phone:
+        user = db.query(User).filter(User.phone == data.phone).first()
+    else:
+        user = db.query(User).filter(User.email == data.email).first()
+
+    if not user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="用户不存在")
+
+    user.password_hash = get_password_hash(data.new_password)
+    db.delete(reset_record)
+    db.commit()
+
+    return {"message": "密码重置成功"}

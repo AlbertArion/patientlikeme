@@ -34,3 +34,17 @@ class Token(BaseModel):
 
 class TokenData(BaseModel):
     username: Optional[str] = None
+
+
+class ForgotPasswordRequest(BaseModel):
+    """忘记密码 - 请求验证码"""
+    phone: Optional[str] = None
+    email: Optional[EmailStr] = None
+
+
+class ForgotPasswordReset(BaseModel):
+    """忘记密码 - 重置"""
+    phone: Optional[str] = None
+    email: Optional[EmailStr] = None
+    code: str
+    new_password: str

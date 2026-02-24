@@ -96,6 +96,8 @@
             </el-form-item>
           </el-form>
           <div class="links">
+            <router-link :to="{ path: '/forgot-password', query: $route.query }">忘记密码？</router-link>
+            <span class="links-sep">|</span>
             还没有账号？
             <router-link :to="{ path: '/register', query: $route.query }">立即注册</router-link>
           </div>
@@ -515,5 +517,10 @@ const handleLogin = async () => {
 
 .links a:hover {
   text-decoration: underline;
+}
+
+.links-sep {
+  margin: 0 10px;
+  color: #cbd5e1;
 }
 </style>
