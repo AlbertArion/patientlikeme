@@ -3,9 +3,34 @@
     <div class="solutions-page">
       <div class="container-wide">
         <section class="page-hero">
-          <h1>治疗方案</h1>
-          <p class="hero-tagline">向他人学习，找到适合你的治疗方案</p>
-          <div class="hero-search">
+          <div class="hero-head">
+            <div>
+              <h1>治疗方案</h1>
+              <p class="hero-tagline">向他人学习，找到适合你的治疗方案</p>
+            </div>
+            <router-link v-if="userStore.isLoggedIn" to="/solutions/create" class="btn-new">
+              <el-button type="primary">新建方案</el-button>
+            </router-link>
+          </div>
+          <div class="filter-search-row">
+            <span class="filter-label">筛选符合以下条件的患者：</span>
+            <el-select
+              v-model="filterDisease"
+              placeholder="选择疾病"
+              clearable
+              filterable
+              size="large"
+              class="filter-select"
+              @change="onFilterChange"
+            >
+              <el-option label="全部" value="" />
+              <el-option
+                v-for="d in diseaseOptions"
+                :key="d"
+                :label="d"
+                :value="d"
+              />
+            </el-select>
             <el-input
               v-model="searchKeyword"
               placeholder="输入疾病或治疗方案名称搜索"
@@ -20,20 +45,29 @@
           </div>
         </section>
 
-        <div class="solutions-grid">
+        <el-skeleton v-if="loading" :rows="6" animated />
+        <el-empty v-else-if="displaySolutions.length === 0" description="暂无相关治疗方案" />
+        <div v-else class="solutions-content">
           <div
-            v-for="solution in filteredSolutions"
-            :key="solution.id"
-            class="solution-card"
+            v-for="(items, category) in groupedByCategory"
+            :key="category"
+            class="category-section"
           >
-            <div class="solution-header">
+            <h3 class="category-title">{{ category }}</h3>
+            <div class="solutions-grid">
+              <div
+                v-for="solution in items"
+                :key="solution.id"
+                class="solution-card"
+              >
+                <div class="solution-header">
               <h3>{{ solution.title }}</h3>
               <el-tag type="danger" size="small" effect="plain">{{ solution.disease_name }}</el-tag>
             </div>
-            <p class="solution-description">{{ solution.description }}</p>
+            <p class="solution-description">{{ solution.description || '暂无详细描述' }}</p>
             <div class="solution-stats">
               <div class="stat-item">
-                <span class="stat-label">成功率</span>
+                <span class="stat-label">感知有效性</span>
                 <span class="stat-value success">{{ solution.success_rate }}</span>
               </div>
               <div class="stat-item">
@@ -44,90 +78,136 @@
             <div class="effectiveness-bar">
               <span class="bar-label">社区反馈</span>
               <div class="bar-track">
-                <div class="bar-fill" :style="{ width: solution.success_rate }"></div>
+                <div class="bar-fill" :style="{ width: solution.success_rate || '0%' }"></div>
               </div>
               <span class="bar-legend">高</span>
             </div>
             <div class="solution-actions">
-              <el-button type="primary" size="small">查看详情</el-button>
-              <el-button size="small" plain>我也在用</el-button>
+              <el-button type="primary" size="small" @click="goToDetail(solution.id)">查看详情</el-button>
+              <el-button
+                size="small"
+                :type="solutionsStore.isUsing(solution.id) ? 'success' : undefined"
+                :plain="!solutionsStore.isUsing(solution.id)"
+                :disabled="solutionsStore.isUsing(solution.id)"
+                @click="handleUseThis(solution)"
+              >
+                {{ solutionsStore.isUsing(solution.id) ? '已在用' : '我也在用' }}
+              </el-button>
+                </div>
+              </div>
             </div>
           </div>
+          <p v-if="lastUpdated" class="last-updated">最后更新时间：{{ lastUpdated }}</p>
         </div>
-
-        <el-empty v-if="filteredSolutions.length === 0" description="暂无相关治疗方案" />
       </div>
     </div>
   </AppLayout>
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
+import { ElMessageBox, ElMessage } from 'element-plus'
 import AppLayout from '@/components/AppLayout.vue'
+import { useSolutionsStore } from '@/stores/solutions'
+import { useUserStore } from '@/stores/user'
+import { solutionsAPI } from '@/api/solutions'
 
+const DISEASE_OPTIONS = ['糖尿病', '高血压', '慢性肾病', '冠心病', '类风湿关节炎', '哮喘']
+
+const router = useRouter()
+const solutionsStore = useSolutionsStore()
+const userStore = useUserStore()
 const searchKeyword = ref('')
+const filterDisease = ref('')
+const solutions = ref([])
+const loading = ref(true)
 
-const solutions = ref([
-  {
-    id: 1,
-    disease_name: '糖尿病',
-    title: '综合管理方案',
-    description: '包括饮食控制、运动疗法和药物治疗的综合方案，通过科学的血糖管理和生活方式调整，有效控制糖尿病进展。',
-    success_rate: '85%',
-    user_count: 150
-  },
-  {
-    id: 2,
-    disease_name: '高血压',
-    title: '降压治疗方案',
-    description: '通过药物和生活方式调整控制血压，包括合理用药、低盐饮食、适量运动等综合措施。',
-    success_rate: '90%',
-    user_count: 200
-  },
-  {
-    id: 3,
-    disease_name: '慢性肾病',
-    title: '肾功能保护方案',
-    description: '延缓肾功能衰退的综合治疗方案，包括药物治疗、饮食管理和定期监测。',
-    success_rate: '75%',
-    user_count: 80
-  },
-  {
-    id: 4,
-    disease_name: '冠心病',
-    title: '心血管康复方案',
-    description: '通过药物治疗、运动康复和心理干预，改善心血管功能，预防心血管事件。',
-    success_rate: '82%',
-    user_count: 120
-  },
-  {
-    id: 5,
-    disease_name: '类风湿关节炎',
-    title: '关节保护方案',
-    description: '综合运用药物治疗、物理治疗和功能锻炼，减轻关节炎症，保护关节功能。',
-    success_rate: '78%',
-    user_count: 95
-  },
-  {
-    id: 6,
-    disease_name: '哮喘',
-    title: '呼吸管理方案',
-    description: '通过规范化的药物治疗和环境控制，有效控制哮喘症状，提高生活质量。',
-    success_rate: '88%',
-    user_count: 160
+const diseaseOptions = computed(() => {
+  const fromData = [...new Set(solutions.value.map(s => s.disease_name))]
+  return [...new Set([...DISEASE_OPTIONS, ...fromData])]
+})
+
+onMounted(async () => {
+  const conds = userStore.userInfo?.interested_conditions
+  if (Array.isArray(conds) && conds.length > 0) {
+    filterDisease.value = conds[0]
   }
-])
+  await loadSolutions()
+})
+
+async function loadSolutions() {
+  loading.value = true
+  try {
+    const params = filterDisease.value ? { disease: filterDisease.value } : {}
+    const list = await solutionsAPI.getList(params)
+    solutions.value = list || []
+  } catch {
+    solutions.value = []
+  } finally {
+    loading.value = false
+  }
+}
+
+function onFilterChange() {
+  loadSolutions()
+}
 
 const filteredSolutions = computed(() => {
-  if (!searchKeyword.value) return solutions.value
-  const keyword = searchKeyword.value.toLowerCase()
-  return solutions.value.filter(
-    s =>
-      s.disease_name.toLowerCase().includes(keyword) ||
-      s.title.toLowerCase().includes(keyword) ||
-      s.description.toLowerCase().includes(keyword)
-  )
+  let list = solutions.value
+  if (searchKeyword.value) {
+    const keyword = searchKeyword.value.toLowerCase()
+    list = list.filter(
+      s =>
+        (s.disease_name && s.disease_name.toLowerCase().includes(keyword)) ||
+        (s.title && s.title.toLowerCase().includes(keyword)) ||
+        (s.description && s.description.toLowerCase().includes(keyword))
+    )
+  }
+  return list
 })
+
+const groupedByCategory = computed(() => {
+  const groups = {}
+  for (const s of filteredSolutions.value) {
+    const cat = s.category || '综合方案'
+    if (!groups[cat]) groups[cat] = []
+    groups[cat].push(s)
+  }
+  return groups
+})
+
+const displaySolutions = computed(() => filteredSolutions.value)
+
+const lastUpdated = computed(() => {
+  const dates = solutions.value
+    .map(s => s.updated_at || s.created_at)
+    .filter(Boolean)
+  if (dates.length === 0) return ''
+  const max = new Date(Math.max(...dates.map(d => new Date(d))))
+  return max.toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric' })
+})
+
+function goToDetail(id) {
+  router.push({ name: 'SolutionDetail', params: { id } })
+}
+
+function handleUseThis(solution) {
+  ElMessageBox.confirm(
+    `确认标记为「我也在用」「${solution.title}」？`,
+    '确认',
+    {
+      confirmButtonText: '确认',
+      cancelButtonText: '取消',
+      type: 'info'
+    }
+  )
+    .then(() => {
+      solutionsStore.addUsing(solution.id)
+      ElMessage.success('已记录，你正在使用该方案')
+    })
+    .catch(() => {})
+}
 </script>
 
 <style scoped>
@@ -137,6 +217,18 @@ const filteredSolutions = computed(() => {
 
 .page-hero {
   margin-bottom: 40px;
+}
+
+.hero-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.hero-head .btn-new {
+  flex-shrink: 0;
 }
 
 .page-hero h1 {
@@ -153,19 +245,76 @@ const filteredSolutions = computed(() => {
   margin-bottom: 24px;
 }
 
-.hero-search {
-  max-width: 440px;
+.filter-search-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+  flex-wrap: nowrap;
+}
+
+.filter-label {
+  font-size: 14px;
+  color: var(--pc-cool-muted);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.filter-select {
+  width: 220px;
+  flex-shrink: 0;
+}
+
+.filter-select :deep(.el-select__wrapper) {
+  min-width: 0;
 }
 
 .search-input {
+  flex: 1;
+  min-width: 0;
   border-radius: 10px;
+}
+
+.search-input :deep(.el-input__wrapper) {
+  min-width: 0;
+}
+
+.category-section {
+  margin-bottom: 40px;
+}
+
+.category-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--pc-cool);
+  margin: 0 0 16px 0;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.last-updated {
+  font-size: 13px;
+  color: var(--pc-cool-muted);
+  margin-top: 24px;
 }
 
 .solutions-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
   gap: 24px;
   margin-bottom: 32px;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+}
+
+@media (min-width: 900px) {
+  .solutions-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 600px) {
+  .solutions-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 .solution-card {
@@ -203,6 +352,11 @@ const filteredSolutions = computed(() => {
   color: var(--pc-cool-muted);
   line-height: 1.6;
   margin-bottom: 20px;
+  min-height: 3.2em;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .solution-stats {

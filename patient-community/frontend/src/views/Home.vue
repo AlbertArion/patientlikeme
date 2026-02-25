@@ -94,7 +94,7 @@
           <div class="feature-card">
             <div class="feature-icon"><el-icon :size="40"><Collection /></el-icon></div>
             <h3>治疗方案库</h3>
-            <p>查看真实效果反馈与成功率，辅助决策</p>
+            <p>查看真实效果反馈与感知有效性，辅助决策</p>
           </div>
         </div>
       </div>

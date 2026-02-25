@@ -24,6 +24,9 @@ class Settings(BaseSettings):
     
     # CORS配置
     CORS_ORIGINS: list = ["http://localhost:3000", "http://127.0.0.1:3000"]
+
+    # 运营/管理端 API Key（请求头 X-Admin-Key），为空则禁用管理接口
+    ADMIN_API_KEY: str = os.getenv("ADMIN_API_KEY", "dev-admin-key")
     
     class Config:
         env_file = ".env"

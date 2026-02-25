@@ -61,6 +61,22 @@ const routes = [
     path: '/solutions',
     name: 'Solutions',
     component: () => import('@/views/Solutions.vue')
+  },
+  {
+    path: '/solutions/create',
+    name: 'SolutionCreate',
+    component: () => import('@/views/SolutionCreate.vue'),
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/solutions/:id',
+    name: 'SolutionDetail',
+    component: () => import('@/views/SolutionDetail.vue')
+  },
+  {
+    path: '/admin/solutions',
+    name: 'AdminSolutions',
+    component: () => import('@/views/AdminSolutions.vue')
   }
 ]
 

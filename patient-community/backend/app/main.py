@@ -4,7 +4,7 @@ from fastapi.staticfiles import StaticFiles
 import os
 from .config import settings
 from .database import engine, Base
-from .api import auth, records, match, community
+from .api import auth, records, match, community, solutions, admin_solutions
 
 # 创建数据库表
 Base.metadata.create_all(bind=engine)
@@ -35,6 +35,8 @@ app.include_router(auth.router, prefix="/api")
 app.include_router(records.router, prefix="/api")
 app.include_router(match.router, prefix="/api")
 app.include_router(community.router, prefix="/api")
+app.include_router(solutions.router, prefix="/api")
+app.include_router(admin_solutions.router, prefix="/api")
 
 @app.get("/")
 def root():

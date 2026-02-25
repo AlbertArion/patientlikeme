@@ -3,7 +3,7 @@ from typing import Optional
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 from fastapi import Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordBearer
+from fastapi.security import OAuth2PasswordBearer, APIKeyHeader
 from sqlalchemy.orm import Session
 from ..config import settings
 from ..database import get_db
@@ -61,3 +61,13 @@ def get_current_user(
         raise credentials_exception
     
     return user
+
+admin_api_key_header = APIKeyHeader(name="X-Admin-Key", auto_error=False)
+
+def require_admin_key(api_key: str = Depends(admin_api_key_header)):
+    """运营端接口：校验 X-Admin-Key"""
+    if not settings.ADMIN_API_KEY:
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="管理接口未配置")
+    if not api_key or api_key != settings.ADMIN_API_KEY:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="无管理权限")
+    return api_key

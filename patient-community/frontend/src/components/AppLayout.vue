@@ -1,5 +1,11 @@
 <template>
   <div class="app-layout">
+    <!-- 登录后信息不全时，弹出个人资料构建器引导补充 -->
+    <ProfileBuilderModal
+      v-model="showProfileBuilder"
+      @complete="showProfileBuilder = false"
+      @skip="onProfileBuilderSkip"
+    />
     <header class="top-nav">
       <div class="nav-inner container-wide">
         <router-link to="/" class="logo">
@@ -69,15 +75,42 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { useUserStore } from '@/stores/user'
+import ProfileBuilderModal from './ProfileBuilderModal.vue'
 
 const route = useRoute()
 const router = useRouter()
 const userStore = useUserStore()
 const menuOpen = ref(false)
+
+const PROFILE_BUILDER_DISMISSED = 'profile_builder_dismissed'
+
+const profileIncomplete = computed(() => {
+  const u = userStore.userInfo
+  if (!u) return false
+  const hasEmail = !!(u.email && u.email.trim())
+  const hasPhone = !!(u.phone && u.phone.trim())
+  return !hasEmail && !hasPhone
+})
+
+const showProfileBuilder = ref(false)
+
+function checkProfileBuilder() {
+  if (!userStore.isLoggedIn || !profileIncomplete.value) return
+  if (sessionStorage.getItem(PROFILE_BUILDER_DISMISSED)) return
+  showProfileBuilder.value = true
+}
+
+function onProfileBuilderSkip() {
+  sessionStorage.setItem(PROFILE_BUILDER_DISMISSED, '1')
+}
+
+onMounted(() => {
+  checkProfileBuilder()
+})
 
 const isActive = (path) => {
   if (path === '/dashboard') return route.path === '/dashboard'

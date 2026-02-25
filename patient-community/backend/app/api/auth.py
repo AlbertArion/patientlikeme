@@ -89,7 +89,7 @@ def update_profile(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """更新用户信息（仅邮箱、手机号）"""
+    """更新用户信息（邮箱、手机号、感兴趣疾病）"""
     if user_data.email is not None:
         existing = db.query(User).filter(User.email == user_data.email, User.id != current_user.id).first()
         if existing:
@@ -100,6 +100,9 @@ def update_profile(
         if existing:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="手机号已被其他用户使用")
         current_user.phone = user_data.phone
+    if user_data.interested_conditions is not None:
+        import json
+        current_user.interested_conditions = json.dumps(user_data.interested_conditions, ensure_ascii=False) if user_data.interested_conditions else None
 
     db.commit()
     db.refresh(current_user)
